@@ -5,20 +5,19 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES all
 
-# Helpers
-RUN apt-get update && apt-get install -y vim xterm pulseaudio cups 
+ENV NOMACHINE_URL https://download.nomachine.com/download/6.8/Linux/nomachine_6.8.1_1_amd64.deb
 
-RUN apt-get -y dist-upgrade 
-RUN apt-get install -y  mate-desktop-environment-core mate-desktop-environment mate-indicator-applet ubuntu-mate-themes ubuntu-mate-wallpapers chromium-browser firefox nano sudo
+RUN apt update && apt dist-upgrade -y
+RUN apt install -y vim xterm pulseaudio cups firefox nano sudo curl gdebi
+RUN apt install -y mate-desktop-environment-core mate-desktop-environment mate-indicator-applet ubuntu-mate-themes ubuntu-mate-wallpapers
+RUN apt install -y bash-completion
 
-RUN apt-get install -y wget
+RUN curl -SL "$NOMACHINE_URL" -o nomachine.deb
 
-RUN wget https://download.nomachine.com/download/6.5/Linux/nomachine_6.5.6_9_amd64.deb -O /nomachine.deb
+RUN gdebi --n nomachine.deb
 
-RUN dpkg -i /nomachine.deb
-
-RUN apt-get clean
-RUN apt-get autoclean
+RUN apt autoclean -y
+RUN apt remove -y
 
 RUN echo 'pref("browser.tabs.remote.autostart", false);' >> /usr/lib/firefox/browser/defaults/preferences/vendor-firefox.js
 RUN rm -rf /var/lib/apt/lists/*
@@ -31,12 +30,12 @@ echo 'nomachine:nomachine' | chpasswd
 
 RUN echo "nomachine    ALL=(ALL) ALL" >> /etc/sudoers
 
-EXPOSE 4000
-
-VOLUME [ "/home/nomachine" ]
 
 ADD nxserver.sh /
-
 RUN chmod +x /nxserver.sh
 
-ENTRYPOINT ["/nxserver.sh"]
+EXPOSE 4000
+
+VOLUME /home/nomachine
+
+ENTRYPOINT /nxserver.sh
